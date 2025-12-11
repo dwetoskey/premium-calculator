@@ -47,9 +47,13 @@
             padding: 20px;
             background: #26332c;
             border-radius: 8px;
-            font-size: 22px;
             text-align: center;
+        }
+        .net-premium {
+            font-size: 48px;
+            font-weight: bold;
             color: #a8e6cf;
+            text-shadow: 0 0 10px rgba(168, 230, 207, 0.5);
         }
         .details {
             font-size: 15px;
@@ -67,14 +71,14 @@
 </head>
 <body>
 
-<h1>Dave's Commission Calculator</h1>
+<h1>Net Premium Calculator</h1>
 <div class="calc">
 
     <label>Policy Type</label>
     <select id="type" onchange="updateFields(); calculate()">
         <option value="">– Select Type –</option>
         <option value="Auto">Auto</option>
-        <option value="Home">Home</option>
+        <option value="Home">Homeistorical</option>
         <option value="Foremost Home">Foremost Home</option>
         <option value="Life">Life</option>
         <option value="Specialty">Specialty</option>
@@ -153,19 +157,20 @@
         }
 
         const rate = rates[type] || 0;
-        const commission = netPremium > 0 ? netPremium * rate : 0;
 
+        // Main result: BIG highlighted Net Premium only
         document.getElementById('result').innerHTML = `
-            <strong>YOUR COMMISSION:</strong><br>
-            <span style="font-size:36px;color:#a8e6cf;">$${commission.toFixed(2)}</span>
+            <div class="net-premium">$${netPremium.toFixed(2)}</div>
+            <div style="margin-top:10px; font-size:18px; color:#bbbbbb;">Net Premium</div>
         `;
 
+        // Details below (commission hidden from main view)
         let breakdown = `Written Premium: $${premium.toFixed(2)}<br>`;
         if (h > 0) breakdown += `− Additional Assessment: $${h.toFixed(2)}<br>`;
         if (i > 0) breakdown += `− Statutory Assessment: $${i.toFixed(2)}<br>`;
         if (j > 0) breakdown += `− MCCA Deficit: $${j.toFixed(2)}<br>`;
-        breakdown += `<strong>Net Premium: $${netPremium.toFixed(2)}</strong><br>`;
-        breakdown += `Rate: ${(rate*100).toFixed(2)}% → Commission: <strong>$${commission.toFixed(2)}</strong>`;
+        breakdown += `<strong style="color:#a8e6cf;">Net Premium: $${netPremium.toFixed(2)}</strong><br>`;
+        breakdown += `<small style="color:#888;">(Commission Rate: ${(rate*100).toFixed(2)}% — internal use only)</small>`;
 
         document.getElementById('details').innerHTML = breakdown;
     }
