@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave's Commission Calculator — 100% Exact Tracker Match</title>
+    <style>
+        body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f8f9fa;}
+        h1{text-align:center;color:#2c3e50;}
+        .calc{background:white;padding:30px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.1);}
+        label{display:block;margin:18px 0 6px;font-weight:bold;color:#2c3e50;}
+        select,input{width:100%;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:6px;}
+        .result{margin-top:25px;padding:20px;background:#e8f5e8;border-radius:8px;font-size:22px;text-align:center;}
+        .details{font-size:15px;margin-top:15px;background:#f8f8f8;padding:15px;border-radius:6px;line-height:1.7;}
+        .vehicles{display:none;}
+    </style>
+</head>
+<body>
+
+<h1>Dave's Commission Calculator</h1>
+<div class="calc">
+
+    <label>Policy Type</label>
+    <select id="type" onchange="updateFields(); calculate()">
+        <option value="">– Select Type –</option>
+        <option value="Auto">Auto</option>
+        <option value="Home">Home</option>
+        <option value="Foremost Home">Foremost Home</option>
+        <option value="Life">Life</option>
+        <option value="Specialty">Specialty</option>
+        <option value="Commercial">Commercial</option>
+        <option value="Commercial Specialty">Commercial Specialty</option>
+    </select>
+
+    <label>Carrier</label>
+    <select id="carrier" onchange="calculate()">
+        <option value="">– Select Carrier –</option>
+        <option value="Farmers">Farmers</option>
+        <option value="BW">BW (Bristol West)</option>
+        <option value="Foremost">Foremost</option>
+        <option value="Progressive">Progressive</option>
+        <option value="AAA">AAA</option>
+        <option value="Hanover">Hanover</option>
+        <option value="Travelers">Travelers</option>
+        <option value="Safeco">Safeco</option>
+        <option value="Other">Other</option>
+    </select>
+
+    <label>Written Premium</label>
+    <input type="number" id="premium" placeholder="e.g. 1245.67" step="0.01" oninput="calculate()">
+
+    <div class="vehicles" id="vehiclesDiv">
+        <label>Number of Vehicles</label>
+        <input type="number" id="vehicles" value="1" min="1" oninput="calculate()">
+    </div>
+
+    <div class="result" id="result">Fill in all fields →</div>
+    <div class="details" id="details"></div>
+</div>
+
+<script>
+    const rates = {
+        'Auto': 0.045,
+        'Home': 0.06,
+        'Foremost Home': 0.05,
+        'Life': 0.25,
+        'Specialty': 0.075,
+        'Commercial': 0.075,
+        'Commercial Specialty': 0.075
+    };
+
+    function updateFields() {
+        const type = document.getElementById('type').value;
+        document.getElementById('vehiclesDiv').style.display = (type === 'Auto') ? 'block' : 'none';
+        calculate();
+    }
+
+    function calculate() {
+        const type     = document.getElementById('type').value;
+        const carrier  = document.getElementById('carrier').value;
+        const premium  = parseFloat(document.getElementById('premium').value) || 0;
+        const vehicles = (type === 'Auto') ? (parseFloat(document.getElementById('vehicles').value) || 1) : 0;
+
+        if (!type || !carrier || premium <= 0) {
+            document.getElementById('result').innerHTML = "Please fill in all fields correctly";
+            document.getElementById('details').innerHTML = "";
+            return;
+        }
+
+        // H9 - Additional Assessment (only Farmers Auto: 15 per vehicle; others 0 or "-")
+        const h = (type === "Auto" && carrier === "Farmers") ? vehicles * 15 : 0;
+
+        // I9 - Statutory Assessment
+        let i = 0;
+        if (type === "Auto" && carrier === "BW")      i = vehicles * 57.12;
+        else if (type === "Auto" && carrier === "Farmers") i = vehicles * 14;
+
+        // J9 - MCCA Deficit
+        const j = (type === "Auto" && carrier === "Farmers") ? vehicles * 24 : 0;
+
+        // K9 - Net Premium (exact logic from your formula)
+        let netPremium = 0;
+        if (type === "Auto" && carrier === "Farmers") {
+            netPremium = premium - h - i - j;
+        } else if (type === "Auto" && carrier === "BW") {
+            netPremium = premium - i;   // H and J are 0
+        } else {
+            // All other types (Home, Life, Specialty, Commercial, Foremost Home, etc.)
+            netPremium = premium;
+        }
+
+        const rate = rates[type] || 0;
+        const commission = netPremium > 0 ? netPremium * rate : 0;
+
+        document.getElementById('result').innerHTML = `
+            <strong>YOUR COMMISSION:</strong><br>
+            <span style="font-size:36px;color:#27ae60;">$${commission.toFixed(2)}</span>
+        `;
+
+        let breakdown = `Written Premium: $${premium.toFixed(2)}<br>`;
+        if (h > 0) breakdown += `− Additional Assessment (H): $${h.toFixed(2)}<br>`;
+        if (i > 0) breakdown += `− Statutory Assessment (I): $${i.toFixed(2)}<br>`;
+        if (j > 0) breakdown += `− MCCA Deficit (J): $${j.toFixed(2)}<br>`;
+        breakdown += `<strong>Net Premium: $${netPremium.toFixed(2)}</strong><br>`;
+        breakdown += `Rate: ${(rate*100).toFixed(2)}% → Commission: <strong>$${commission.toFixed(2)}</strong>`;
+
+        document.getElementById('details').innerHTML = breakdown;
+    }
+
+    updateFields();
+</script>
+</body>
+</html>
